@@ -2,7 +2,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.asg.ashish.privacybrowser.MainActivity"
-    tools:ignore="ExtraText">
+    tools:ignore="ExtraText"
+    >
 
 
 
@@ -20,12 +21,6 @@
             android:visible="true"
             />
 
-        <item
-            android:id="@+id/menuhomepage"
-            android:orderInCategory="2"
-            android:title="@string/menuhome"
-            android:visible="true"
-            />
 
         <item
             android:id="@+id/share"
@@ -35,17 +30,29 @@
             app:actionProviderClass="android.widget.ShareActionProvider"
             />
 
+        <item
+            android:id="@+id/engine"
+            android:orderInCategory="5"
+            android:title="Search Engine"
+            android:visible="true"
+            />
+
 
         <item
-            android:id="@+id/action_settings"
-            android:orderInCategory="5"
-            android:title="@string/action_settings"
+            android:id="@+id/action_theme"
+            android:orderInCategory="6"
+            android:title="Theme"
             android:visible="true"
 
             />
 
-
-
+        <item
+            android:id="@+id/desktop"
+            android:icon="@android:color/darker_gray"
+            android:orderInCategory="7"
+            android:title="Desktop Mode OFF"
+            android:visible="true"
+            />
 
 
 </menu>

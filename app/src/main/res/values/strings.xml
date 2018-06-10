@@ -1,30 +1,12 @@
 <resources>
     <string name="url">Search or type URL</string>
-    <string name="action_settings">Settings</string>
     <string name="share">Share</string>
     <string name="forward">Forward</string>
-    <string name="Settings">Settings</string>
     <string name="Search_Engine">Search Engine:</string>
     <string name="reload">Reload</string>
-    <string name="theme">Theme:</string>
-    <string name="ho">Homepage:</string>
-    <string name="menuhome">Home Page</string>
-    <string name="appname">Browser</string>
+    <string name="appname">Croma</string>
     <string name="multiline">Automatically clears upon exit:\n\n    * Browsing History\n\n    * Cached Data and Files\n\n    * Passwords\n\n    * Website Cookies</string>
 
-    <string-array name="searchengines">
-        <item>Google</item>
-        <item>Yahoo</item>
-        <item>Bing</item>
-        <item>Duck Duck Go</item>
-    </string-array>
 
-    <string-array name="Themes">
-        <item>Device Wallpaper</item>
-        <item>Material Red</item>
-        <item>Cyan</item>
-        <item>Material Dark</item>
-        <item>Paper Design</item>
 
-    </string-array>
 </resources>

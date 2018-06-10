@@ -1,103 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/layout1"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textViewstart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="46dp"
-        android:layout_marginTop="170dp"
-        android:elevation="50dp"
-        android:text="@string/multiline"
-        android:textColor="@color/colorAccent"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:visibility="visible" />
-
-    <android.support.constraint.ConstraintLayout
-        android:id="@+id/frame"
-        android:layout_width="match_parent"
-        android:layout_height="90dp">
-
-
-        <AutoCompleteTextView
-            android:id="@+id/Address"
-            android:layout_width="243dp"
-            android:layout_height="45dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@color/colorPrimaryDark"
-            android:backgroundTint="@color/colorPrimaryDark"
-            android:cursorVisible="true"
-            android:elevation="10dp"
-            android:ems="10"
-            android:hint="@string/url"
-            android:imeOptions="actionGo"
-            android:inputType="textWebEditText|textNoSuggestions"
-            android:autoLink="web"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-
-            android:textColor="@color/colorAccent"
-            android:textColorHint="@color/colorAccent"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.724" />
-
-        <Button
-            android:id="@+id/button"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/overflowextralarge"
-            android:onClick="showMenu"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
-            android:id="@+id/clear"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginEnd="32dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/clear"
-            android:onClick="clear"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/button"
-            app:layout_constraintHorizontal_bias="0.1"
-            app:layout_constraintStart_toEndOf="@+id/Address"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </android.support.constraint.ConstraintLayout>
-
-    <ProgressBar
-        android:id="@+id/progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_marginTop="91dp"
-        android:maxHeight="5dip"
-        android:minHeight="5dip" />
-
-    <WebView
-        android:id="@+id/web"
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/layout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/progress"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="0dp"
-        android:visibility="invisible">
+        >
 
-    </WebView>
+        <TextView
+            android:id="@+id/textViewstart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="46dp"
+            android:layout_marginTop="170dp"
+            android:elevation="50dp"
+            android:text="@string/multiline"
+            android:textColor="@color/colorAccent"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="visible"
+            android:fontFamily="@font/montserrat" />
 
-</RelativeLayout>
+        <RelativeLayout
+            android:id="@+id/frame"
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:foregroundTint="@color/colorPrimaryDark">
+
+
+            <AutoCompleteTextView
+                android:id="@+id/Address"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginEnd="100dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="30dp"
+                android:autoLink="web"
+                android:background="@drawable/round"
+                android:backgroundTint="@color/colorPrimaryDark"
+                android:cursorVisible="true"
+                android:elevation="10dp"
+                android:ems="10"
+                android:fontFamily="@font/montserrat"
+                android:hint="@string/url"
+                android:imeOptions="actionGo"
+                android:inputType="textWebEditText|textNoSuggestions"
+                android:padding="10dp"
+                android:textColor="@color/colorAccent"
+                android:textColorHint="@color/colorAccent"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/button"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="40dp"
+                android:background="@drawable/overflowextralarge"
+
+                 />
+
+            <Button
+                android:id="@+id/clear"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="60dp"
+                android:layout_marginTop="40dp"
+                android:background="@drawable/clear"
+                android:onClick="clear"
+                 />
+
+        </RelativeLayout>
+
+
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginTop="91dp"
+            android:maxHeight="5dip"
+            android:minHeight="5dip"
+            android:visibility="invisible"/>
+
+
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/progress"
+            android:id="@+id/mswipe">
+
+            <WebView
+                android:id="@+id/web"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/progress"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="0dp"
+                android:visibility="invisible">
+
+            </WebView>
+
+        </android.support.v4.widget.SwipeRefreshLayout>
+
+
+
+    </RelativeLayout>
+

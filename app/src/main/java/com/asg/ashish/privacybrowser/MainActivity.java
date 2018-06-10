@@ -3,28 +3,35 @@ package com.asg.ashish.privacybrowser;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.DownloadManager;
-import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Display;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +49,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
@@ -50,10 +58,6 @@ import android.widget.ShareActionProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Objects;
-
-import static com.asg.ashish.privacybrowser.R.drawable.paperdesign;
-
 public class MainActivity extends AppCompatActivity {
 
     private WebView web;
@@ -61,8 +65,16 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progress;
     AutoCompleteTextView Address;
     private ShareActionProvider mShareActionProvider;
-    static String searchengine, homepage, theme;
-    SharedPreferences mPreferences, tPreferences;
+    static String searchengine;
+    SharedPreferences mPreferences, tPreferences,sp, desk;
+    SwipeRefreshLayout mswipe;
+    String TAG="THEME";
+    RelativeLayout layout1;
+    String storedpath, imgpath;
+    private static int RESULT_LOAD_IMG = 1, check = 0, fs = 0;
+    Button button;
+    private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.81 Safari/537.36";
+    private static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.4; en-us; Nexus 4 Build/JOP24G) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -72,14 +84,126 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        web = findViewById(R.id.web);
-
+        web = (WebView)findViewById(R.id.web);
+        mswipe = (SwipeRefreshLayout)findViewById(R.id.mswipe);
         Address = findViewById(R.id.Address);
         glow = findViewById(R.id.textViewstart);
+        button = (Button)findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                PopupMenu popup = new PopupMenu(MainActivity.this, v);
+                // This activity implements OnMenuItemClickListener;
+        /*desk = getSharedPreferences("desktop",MODE_PRIVATE);
+        i.setTitle(desk.getString("deskmode","Desktop Mode OFF"));*/
+
+
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+
+                        switch (item.getItemId()) {
+                            case R.id.reload:
+                                web.reload();
+                                return true;
+
+                            case R.id.forward:
+                                if (web.canGoForward()) {
+                                    web.goForward();
+                                }
+                                return true;
+
+                            case R.id.action_theme:
+                                loadImagefromGallery();
+                                return true;
+
+                            case R.id.share:
+                                mShareActionProvider = (ShareActionProvider) item.getActionProvider();
+                                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                                String sharebody = web.getUrl();
+                                shareIntent.setType("text/plain");
+                                shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, sharebody);
+                                startActivity(Intent.createChooser(shareIntent, "Share via"));
+                                return true;
+
+
+                            case R.id.engine:
+                                CharSequence engines[] = new CharSequence[] {"Google", "Bing", "Duck Duck GO", "Yahoo"};
+
+                                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                builder.setTitle("Select a Search Engine");
+                                builder.setItems(engines, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Toast.makeText(MainActivity.this, Integer.toString(which),Toast.LENGTH_SHORT).show();
+                                        if(which == 0)
+                                            searchengine = "https://www.google.com/search?q=";
+                                        else if (which == 1)
+                                            searchengine = "https://www.bing.com/search?q=";
+                                        else if (which == 2)
+                                            searchengine = "https://duckduckgo.com/?q=";
+                                        else searchengine = "https://search.yahoo.com/search?q=";
+
+                                    }
+                                });
+                                builder.show();
+
+                                return true;
+
+                            case R.id.desktop:
+                                desk = getSharedPreferences("desktop", MODE_PRIVATE);
+                                SharedPreferences.Editor editor = desk.edit();
+
+                                if(check == 0){
+                                    check = 1;
+                                    item.setTitle("Desktop Mode ON");
+                                    editor.putString("deskmode","Desktop Mode ON" );
+
+
+                                }
+                                else {
+                                    check = 0;
+                                    item.setTitle("Desktop Mode OFF");
+                                    editor.putString("deskmode", "Desktop Mode OFF");
+                                }
+                                editor.apply();
+
+                                if(check == 1){
+                                    Toast.makeText(MainActivity.this, "Desktop Mode ON", Toast.LENGTH_SHORT).show();
+                                    setDesktopMode(web, true);
+                                    item.setTitle("Desktop Mode ON");
+
+
+                                }
+                                else {
+                                    Toast.makeText(MainActivity.this, "Desktop Mode OFF", Toast.LENGTH_SHORT).show();
+                                    setDesktopMode(web,false);
+                                    item.setTitle("Desktop Mode OFF");
+
+
+                                }
+
+                                return true;
+
+
+
+                            default:
+                                return MainActivity.super.onOptionsItemSelected(item);
+                        }
+                    }
+                });
+                popup.inflate(R.menu.menu_main);
+                popup.show();
+
+
+            }
+
+
+        });
 
         Intent intent = getIntent();
-        Uri uri = intent.getData();
+        final Uri uri = intent.getData();
         try {
 
             String url = uri.toString();
@@ -95,6 +219,37 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        sp=getSharedPreferences("setback", MODE_PRIVATE);
+        if(sp.contains("imagepath")) {
+            storedpath=sp.getString("imagepath", "");
+            Bitmap myBitmap = BitmapFactory.decodeFile(storedpath);
+            BitmapDrawable b = new BitmapDrawable(myBitmap);
+            final RelativeLayout layout1 = findViewById(R.id.layout1);
+            layout1.setBackgroundDrawable(b);
+        }
+        else{
+            final RelativeLayout layout1 = findViewById(R.id.layout1);
+            layout1.setBackground(getResources().getDrawable(R.drawable.dark));
+        }
+
+
+        mswipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                String url = web.getUrl();
+                Log.v(TAG,"URL Is "+url);
+                if(url == null) {
+                    url = "http://" +
+                            "www.google.com";
+                    web.setVisibility(View.VISIBLE);
+                    glow.setVisibility(View.INVISIBLE);
+                }
+                web.loadUrl(url);
+                mswipe.scheduleLayoutAnimation();
+
+            }
+        });
+
 
 
 
@@ -105,9 +260,6 @@ public class MainActivity extends AppCompatActivity {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        tPreferences = getSharedPreferences("maindatafortheme", MODE_PRIVATE);
-        theme = tPreferences.getString("thememain", null);
-
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             ViewGroup.LayoutParams params = Address.getLayoutParams();
             final int width = params.width;
@@ -117,13 +269,10 @@ public class MainActivity extends AppCompatActivity {
             tpreferencesEditor.apply();
         }
 
-        themesetter();
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, WEB);
 
-
-        //WebSettings webSettings = web.getSettings();
         web.getSettings().setJavaScriptEnabled(true);
 
         web.getSettings().setSupportZoom(true);       //Zoom Control on web
@@ -140,21 +289,18 @@ public class MainActivity extends AppCompatActivity {
 
         web.getSettings().setAllowUniversalAccessFromFileURLs(true);
         web.getSettings().setAllowContentAccess(true);
-        web.getSettings().setDatabaseEnabled(true);
-        web.getSettings().setDomStorageEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
         CookieManager.getInstance().acceptThirdPartyCookies(web);
         CookieManager.getInstance().acceptCookie();
+        haveStoragePermission();
 
 
-        haveFineLocationPermission();
         progress = findViewById(R.id.progress);
 
         mPreferences = getSharedPreferences("maindata", MODE_PRIVATE);
         searchengine = mPreferences.getString("pos2", "https://www.google.com/search?q=");
-        mPreferences = getSharedPreferences("maindata", MODE_PRIVATE);
-        homepage = mPreferences.getString("Homepos", "www.google.com");
+
 
 
         Address.setOnEditorActionListener(new EditText.OnEditorActionListener() {
@@ -207,6 +353,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+
+
         web.setDownloadListener(new DownloadListener() {
             @Override
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
@@ -254,62 +402,97 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        MenuItem i = menu.findItem(R.id.desktop);
+        return true;
     }
 
 
-    public void showMenu(View v) {
 
-        PopupMenu popup = new PopupMenu(this, v);
-        // This activity implements OnMenuItemClickListener
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.reload:
-                        web.reload();
-                        return true;
-
-                    case R.id.forward:
-                        if (web.canGoForward()) {
-                            web.goForward();
-                        }
-                        return true;
-                    case R.id.action_settings:
-                        Intent settings = new Intent("Settings");
-                        startActivity(settings);
-                        return true;
-                    case R.id.share:
-                        mShareActionProvider = (ShareActionProvider) item.getActionProvider();
-                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+    public void loadImagefromGallery() {
 
 
-                        String sharebody = web.getUrl();
-                        shareIntent.setType("text/plain");
-                        shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, sharebody);
-                        startActivity(Intent.createChooser(shareIntent, "Share via"));
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
 
 
-                        return true;
+    }
 
-                    case R.id.menuhomepage:
-                        //web.setWebViewClient(new WebViewClientDemo());
-                        //web.setWebChromeClient(new WebChromeClientDemo());
-                        web.loadUrl("http://" + homepage);
-                        glow.setVisibility(View.INVISIBLE);
-                        web.setVisibility(View.VISIBLE);
-                        return true;
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        sp=getSharedPreferences("setback", MODE_PRIVATE);
+        layout1 = findViewById(R.id.layout1);
+        try {
+            // When an Image is picked
+            if (requestCode == RESULT_LOAD_IMG && resultCode == RESULT_OK
+                    && null != data) {
+                // Get the Image from data
+
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = { MediaStore.MediaColumns.DATA };
+
+                // Get the cursor
+                Cursor cursor = getContentResolver().query(selectedImage,
+                        filePathColumn, null, null, null);
+                // Move to first row
+                cursor.moveToFirst();
+
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                imgpath = cursor.getString(columnIndex);
+                Log.d("path", imgpath);
+                cursor.close();
+
+                SharedPreferences.Editor edit=sp.edit();
+                edit.putString("imagepath",imgpath);
+                edit.apply();
 
 
-                    default:
-                        return MainActivity.super.onOptionsItemSelected(item);
-                }
             }
-        });
-        popup.inflate(R.menu.menu_main);
-        popup.show();
+            else {
+                Toast.makeText(this, "You haven't picked Image",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_LONG)
+                    .show();
 
-
+        }
     }
+
+    public void setDesktopMode(WebView webView,boolean enabled) {
+        /*String newUserAgent = webView.getSettings().getUserAgentString();
+        if (enabled) {
+            try {
+                String ua = webView.getSettings().getUserAgentString();
+                String androidOSString = webView.getSettings().getUserAgentString().substring(ua.indexOf("("), ua.indexOf(")") + 1);
+                newUserAgent = webView.getSettings().getUserAgentString().replace(androidOSString, "(X11; Linux x86_64)");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            newUserAgent = null;
+        }
+
+        webView.getSettings().setUserAgentString(newUserAgent);
+        webView.getSettings().setUseWideViewPort(enabled);
+        webView.getSettings().setLoadWithOverviewMode(enabled);*/
+        if(enabled)
+            webView.getSettings().setUserAgentString(DESKTOP_USER_AGENT);
+        else
+            webView.getSettings().setUserAgentString(MOBILE_USER_AGENT);
+        webView.reload();
+    }
+
 
     private static final String[] WEB = new String[]{
             "www.amazon.com", "www.android.com", "www.bing.com", "www.craiglist.com", "www.diply.com", "www.ebay.com", "www.facebook.com", "www.flipkart.com", "www.google.com", "www.huffingtonpost.com", "www.hotmail.com", "www.imgur.com",
@@ -320,20 +503,7 @@ public class MainActivity extends AppCompatActivity {
             "reddit.com", "slickdeals.com", "snapdeal.com", "twitter.com", "theguardian.com", "theverge.com", "techsavvydotcom.wordpress.com", "usps.com", "verizonwireless.com", "wikipedia.org", "xfinity.com", "youtube.com", "zillow.com"
     };
 
-    /*public boolean checkIntenta(View view){
-        Intent intenta = getIntent();
-        Uri launchapp = Uri.parse(intenta.getPackage());
-        Intent webIntent = new Intent(Intent.ACTION_VIEW, launchapp);
 
-        // Verify it resolves
-        PackageManager packageManager = getPackageManager();
-        List<ResolveInfo> activities = packageManager.queryIntentActivities(webIntent, 0);
-        boolean isIntentSafe = activities.size() > 0;
-        if(isIntentSafe){
-            startActivity(webIntent);
-        }
-        return true;
-    }*/
 
     public void clear(View view) {
         Address.setText(null);
@@ -355,11 +525,8 @@ public class MainActivity extends AppCompatActivity {
             Address.setLayoutParams(params);
 
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            //int screenWidth = display.getWidth();
-            ViewGroup.LayoutParams params = Address.getLayoutParams();
-            /*params.width = screenWidth-230;
 
-            Address.setLayoutParams(params);*/
+            ViewGroup.LayoutParams params = Address.getLayoutParams();
             tPreferences = getSharedPreferences("Width", MODE_PRIVATE);
             int width = tPreferences.getInt("width", 220);
             params.width = width;
@@ -370,6 +537,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
     @Override
 
     public boolean onKeyDown(final int keyCode, final KeyEvent event) {
@@ -377,52 +546,35 @@ public class MainActivity extends AppCompatActivity {
 
         if ((keyCode == KeyEvent.KEYCODE_BACK) && web.canGoBack()) {
             web.goBack();
-//If there is history, then the canGoBack method will return ‘true’//
+
             return true;
         }
 
 
-//If the button that’s been pressed wasn’t the ‘Back’ button, or there’s currently no
-//WebView history, then the system should resort to its default behavior and return
-//the user to the previous Activity//
         else
             return super.onKeyDown(keyCode, event);
     }
 
     public boolean haveStoragePermission() {
         if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
+            if( checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED&& (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED)){
 
                 Log.e("Permission error", "You have permission");
                 return true;
             } else {
 
                 Log.e("Permission error", "You have asked for permission");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION},1);
                 return false;
             }
-        } else { //you dont need to worry about these stuff below api level 23
+        } else {
             Log.e("Permission error", "You already have the permission");
             return true;
         }
     }
 
 
-    public void haveFineLocationPermission() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.e("Permission error", "You have permission");
-            } else {
-
-                Log.e("Permission error", "You have asked for permission");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-        } else { //you dont need to worry about these stuff below api level 23
-            Log.e("Permission error", "You already have the permission");
-        }
-    }
 
     private boolean isConnect() {
         ConnectivityManager c = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -448,6 +600,8 @@ public class MainActivity extends AppCompatActivity {
             Address.setText(web.getTitle());
             Address.setCursorVisible(false);
             Address.setAdapter(null);
+            mswipe.setRefreshing(false);
+            progress.setVisibility(View.INVISIBLE);
 
 
         }
@@ -461,61 +615,44 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (Uri.parse(url).getHost().equals("play.google.com")) {
+
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                view.getContext().startActivity(intent);
+                return true;
+            }
+            else return false;
+
+
+        }
+
     }
+
 
     private class WebChromeClientDemo extends WebChromeClient {
         public void onProgressChanged(WebView view, int prog) {
-            if(android.os.Build.VERSION.SDK_INT >= 11){
-                // will update the "progress" propriety of seekbar until it reaches progress
 
                 ObjectAnimator animation = ObjectAnimator.ofInt(progress, "progress",prog);
                 animation.setDuration(500); // 0.5 second
                 animation.setInterpolator(new DecelerateInterpolator());
                 animation.start();
-            }
-            else
-                progress.setProgress(prog);
-            //progress.setProgress(prog);
+
 
         }
 
         @Override
         public void onGeolocationPermissionsShowPrompt(String origin,
                                                        GeolocationPermissions.Callback callback) {
-            // Always grant permission since the app itself requires location
-            // permission and the user has therefore already granted it
+
             callback.invoke(origin, true, false);
         }
 
+    }
 
 
 
-
-
-       /* public void WebChromeClientDemo(){
-            Intent intent = getIntent();
-            String appPackageName = intent.getPackage();
-            //Toast.makeText(this,appPackageName,Toast.LENGTH_LONG).show();
-            if((appPackageName!=null)&&(appPackageName!="com.asg.ashish.privacybrowser")) {
-
-                // getPackageName() from Context or Activity object
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-                }
-
-            }
-        }*/
-
-
-
-
-
-
-
-
-}
 
 
     class MyJavaScriptInterface {
@@ -536,10 +673,6 @@ public class MainActivity extends AppCompatActivity {
         web.clearSslPreferences();
         web.clearFocus();
         clearCookiesAndCache(this);
-        tPreferences = getSharedPreferences("maindatafortheme",MODE_PRIVATE);
-        SharedPreferences.Editor tpreferencesEditor = tPreferences.edit();
-        tpreferencesEditor.putString("thememain",theme);
-        tpreferencesEditor.apply();
 
     }
 
@@ -553,20 +686,6 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor preferencesEditor = mPreferences.edit();
         preferencesEditor.putString("pos2", searchengine);
         preferencesEditor.apply();
-
-
-        //*****For Homepage******
-        mPreferences = getSharedPreferences("maindata", MODE_PRIVATE);
-        preferencesEditor.putString("Homepos", homepage);
-        preferencesEditor.apply();
-
-        //******For Theme********
-        tPreferences = getSharedPreferences("maindatafortheme",MODE_PRIVATE);
-        SharedPreferences.Editor tpreferencesEditor = tPreferences.edit();
-        tpreferencesEditor.putString("thememain",theme);
-        tpreferencesEditor.apply();
-
-
 
 
 
@@ -583,38 +702,30 @@ public class MainActivity extends AppCompatActivity {
             cookieManager.removeAllCookie();
         }
     }
-    public void themesetter(){
-        final RelativeLayout layout1 = findViewById(R.id.layout1);
 
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-        final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
 
-        if(Objects.equals(theme, "Material Red"))
-            layout1.setBackgroundColor(Color.RED);
-        else if(Objects.equals(theme, "Cyan"))
-            layout1.setBackgroundColor(Color.CYAN);
-        else if(Objects.equals(theme, "Material Dark"))
-            layout1.setBackgroundColor(Color.DKGRAY);
-        else if(Objects.equals(theme, "Paper Design"))
-            {
-            layout1.setBackground(getResources().getDrawable(paperdesign));
-            //Toast.makeText(this,"In Setter",Toast.LENGTH_SHORT).show();
-        }
-        else
-            layout1.setBackground(wallpaperDrawable);
-    }
 
     @Override
     protected void onStart(){
         super.onStart();
-        themesetter();
+
 
 
     }
     @Override
     protected void onResume(){
         super.onResume();
-        themesetter();
+        if(sp.contains("imagepath")) {
+            storedpath=sp.getString("imagepath", "");
+            Bitmap myBitmap = BitmapFactory.decodeFile(storedpath);
+            BitmapDrawable b = new BitmapDrawable(myBitmap);
+            final RelativeLayout layout1 = findViewById(R.id.layout1);
+            layout1.setBackgroundDrawable(b);
+        }
+        else{
+            final RelativeLayout layout1 = findViewById(R.id.layout1);
+            layout1.setBackground(getResources().getDrawable(R.drawable.dark));
+        }
 
     }
 
